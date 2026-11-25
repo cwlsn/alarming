@@ -27,10 +27,4 @@ enum TimeText {
         let duration = Duration.seconds(minutes * 60)
         return "Rings in " + duration.formatted(.units(allowed: [.days, .hours, .minutes], width: .abbreviated))
     }
-
-    static func string(_ date: Date) -> String {
-        Calendar.current.component(.second, from: date) == 0
-            ? date.formatted(date: .omitted, time: .shortened)
-            : date.formatted(date: .omitted, time: .standard)
-    }
 }

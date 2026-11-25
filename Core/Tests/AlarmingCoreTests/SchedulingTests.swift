@@ -226,5 +226,5 @@ private func tempURL() -> URL { URL.temporaryDirectory.appending(path: "alarming
     #expect(SnoozePolicy(isEnabled: false).summary == "No snooze")
     #expect(SnoozePolicy().summary == "Snooze 9m, no limit")
     #expect(SnoozePolicy(limit: 2).summary == "Snooze 9m, up to 2x")
-    #expect(SnoozePolicy(firstMinutes: 10, style: .multiply(.half), limit: 3).summary == "Snooze 10m, 5m, 2m 30s")
+    #expect(SnoozePolicy(firstMinutes: 10, style: .multiply(.half), limit: 3).summary == "Snooze 10m, 5m, 3m")
 }

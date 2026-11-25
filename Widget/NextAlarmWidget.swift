@@ -70,7 +70,7 @@ struct NextAlarmView: View {
     private var inlineText: String {
         guard let next = entry.next else { return "No alarms on" }
         let days = daysUntil(next.date)
-        let time = TimeText.string(next.date)
+        let time = ClockText.string(next.date)
         return days == 0 ? time : "\(next.date.formatted(.dateTime.weekday(.abbreviated))) \(time)"
     }
 

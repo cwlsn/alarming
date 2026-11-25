@@ -67,7 +67,7 @@ public struct SnoozePolicy: Codable, Hashable, Sendable {
         )
     }
 
-    /// Seconds for the snooze taken after `completed` earlier snoozes, or `nil` when only Stop is allowed.
+    /// Seconds, always whole minutes, for the snooze taken after `completed` earlier snoozes, or `nil` when only Stop is allowed.
     public func interval(after completed: Int) -> Int? {
         guard isEnabled, completed >= 0 else { return nil }
         if let limit, completed >= limit { return nil }
@@ -121,7 +121,9 @@ public struct SnoozePolicy: Codable, Hashable, Sendable {
             }
             seconds = numerator / denominator
         }
-        return seconds >= Self.minimumSeconds ? seconds : nil
+        // Too short is judged before rounding up to a whole minute, or dividing would never end.
+        guard seconds >= Self.minimumSeconds else { return nil }
+        return (seconds + 59) / 60 * 60
     }
 
     private static func clampedFirst(_ minutes: Int) -> Int { min(max(minutes, 1), 30) }
