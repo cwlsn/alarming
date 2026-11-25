@@ -66,7 +66,7 @@ Check these by hand on a phone before a release:
 | `Widget` | Live Activity, widgets and Control Center button |
 | `UITests` | UI tests, run with `-uiTesting` |
 | `Scripts` | Generate the icon, the symbol and the tones. Each file's first lines show how to run it. |
-| `Spike` | A separate test app for how AlarmKit behaves on a real phone. See [Spike/README.md](Spike/README.md). |
+| `docs` | Screenshots, and [what AlarmKit does on a real phone](docs/alarmkit-findings.md) |
 
 ### Decisions worth knowing
 

@@ -1,8 +1,6 @@
-# AlarmKit spike
+# AlarmKit on a real phone
 
-A small app for learning how AlarmKit behaves on a real phone, kept because the answers shape the main app. **Its tests ring out loud.**
-
-## Findings
+What a small test app showed about AlarmKit, kept because the answers shape this app. The test app itself was removed once it had answered them.
 
 iPhone 14 Pro, iOS 27.2.1, November 2026.
 
@@ -22,14 +20,14 @@ All three conditions are needed: after a snooze, a countdown, and no second butt
 
 3. **Unproven:** whether an invisible ring makes a sound. The tests cannot hear.
 
-## Run
+## Check again after an iOS update
 
-With an unlocked phone and `Config/Local.xcconfig` set up as in the main README:
+If a later iOS shows the invisible ring, the second button on the last ring can go (`needsEndButton` in `Core`).
+
+The test app and its tests are in git history, in the `Spike` folder. They need an unlocked phone and **ring out loud**:
 
 ```sh
-cd Spike
-xcodegen generate
-xcodebuild test -project AlarmingSpike.xcodeproj -scheme AlarmingSpike -destination 'id=<your phone>' -allowProvisioningUpdates
+git checkout 3b057e7 -- Spike
 ```
 
-Run `testChainWithAppTerminated` once first, to grant alarm permission. The two tests of the invisible ring expect it to be missing, and fail if a later iOS fixes it. If a run is cut short, open the app and tap **Cancel all**.
+Its README explains how to run it. Remove it again with `git rm -rf Spike`.

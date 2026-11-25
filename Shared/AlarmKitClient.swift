@@ -38,7 +38,7 @@ struct AlarmKitClient: AlarmClient {
         let snooze = request.nextSnooze
         let stop = StopIntent(ringID: request.id.uuidString, alarmID: alarm.id.uuidString)
         // iOS draws Stop itself and ignores custom stop buttons since 26.1, so the last ring after a
-        // snooze shows both Stop and this. Spike/README.md has the evidence.
+        // snooze shows both Stop and this. docs/alarmkit-findings.md has the evidence.
         let needsEndButton = request.needsEndButton
         let alert = AlarmPresentation.Alert(
             title: "\(alarm.displayLabel)",
