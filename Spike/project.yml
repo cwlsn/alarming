@@ -1,0 +1,51 @@
+name: AlarmingSpike
+options:
+  bundleIdPrefix: com.cwlsn
+  deploymentTarget: { iOS: "26.1" }
+configFiles: { Debug: ../Config/Base.xcconfig, Release: ../Config/Base.xcconfig }
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  AlarmingSpike:
+    type: application
+    platform: iOS
+    sources: [App, Shared]
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).alarming.spike } }
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Alarming Spike
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSAlarmKitUsageDescription: Alarming schedules the alarms you create.
+        NSSupportsLiveActivities: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+    dependencies: [{ target: SpikeWidget }]
+  SpikeWidget:
+    type: app-extension
+    platform: iOS
+    sources: [Widget, Shared]
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).alarming.spike.widget } }
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: Alarming Spike
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension: { NSExtensionPointIdentifier: com.apple.widgetkit-extension }
+  SpikeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_PREFIX).alarming.spike.uitests, GENERATE_INFOPLIST_FILE: true } }
+    dependencies: [{ target: AlarmingSpike }]
+schemes:
+  AlarmingSpike:
+    build: { targets: { AlarmingSpike: all } }
+    test: { targets: [SpikeUITests] }
