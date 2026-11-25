@@ -204,7 +204,7 @@ private struct QuickEntryBar: View {
             let alarm = AlarmDefinition(hour: entry.hour, minute: entry.minute, days: entry.days, label: entry.label)
             let next = alarm.nextOccurrence(after: .now) ?? .now
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(TimeText.string(next)) · \(alarm.displayLabel) · \(RepeatDays.summary(alarm.days))")
+                Text("\(ClockText.string(next)) · \(alarm.displayLabel) · \(RepeatDays.summary(alarm.days))")
                     .font(.subheadline.weight(.semibold))
                 Text(TimeText.ringsIn(next, now: .now)).font(.footnote).foregroundStyle(Color.quiet)
             }
@@ -347,7 +347,7 @@ private struct AlarmRow: View {
 
     private var snooze: some View {
         VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 8) {
-            Text(wake.map { "Up by \(TimeText.string($0))" } ?? "No limit")
+            Text(wake.map { "Up by \(ClockText.string($0))" } ?? "No limit")
                 .font(.caption.weight(.medium))
                 .monospacedDigit()
                 .foregroundStyle(isOn && wake != nil ? Color.accentText : Color.quiet)

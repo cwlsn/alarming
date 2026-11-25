@@ -49,7 +49,7 @@ struct SnoozeSettingsView: View {
                 Text(policy.isEnabled ? "Up by" : "Snooze off").foregroundStyle(Color.quiet)
                 if !typeSize.isAccessibilitySize { Spacer() }
                 if let wake = rings?.last {
-                    Text(TimeText.string(wake))
+                    Text(ClockText.string(wake))
                         .font(.title2.weight(.semibold))
                         .monospacedDigit()
                         .foregroundStyle(policy.isEnabled ? Color.accentText : Color.quiet)

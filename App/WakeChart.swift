@@ -40,14 +40,14 @@ struct WakeChart: View {
                 // Axis labels take the plot's room at the largest sizes.
                 .dynamicTypeSize(...DynamicTypeSize.accessibility1)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(isOpen ? "Snoozes without a limit" : "Rings at " + points.map { TimeText.string($0.date) }.joined(separator: ", "))
+                .accessibilityLabel(isOpen ? "Snoozes without a limit" : "Rings at " + points.map { ClockText.string($0.date) }.joined(separator: ", "))
                 .accessibilityIdentifier("wake-chart")
         }
         .sensoryFeedback(.selection, trigger: focus?.id)
     }
 
     private func readout(_ point: Point) -> String {
-        let time = TimeText.string(point.date)
+        let time = ClockText.string(point.date)
         return switch point.id {
         case 0: "\(time) · alarm"
         case 1: "\(time) · after 1 snooze"
@@ -88,7 +88,7 @@ struct WakeChart: View {
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(Color.hairline)
                 AxisValueLabel(collisionResolution: .disabled) {
                     if let seconds = value.as(Double.self) {
-                        Text(TimeText.string(start.addingTimeInterval(seconds))).font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
+                        Text(ClockText.string(start.addingTimeInterval(seconds))).font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
                     }
                 }
             }

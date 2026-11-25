@@ -56,6 +56,12 @@ final class AlarmingUITests: XCTestCase {
         waitForExpectations(timeout: 5)
     }
 
+    private func expectNoSeconds() {
+        for text in [app.staticTexts["projected-wake"].label, app.descendants(matching: .any)["wake-chart"].label] {
+            XCTAssertNil(text.range(of: #"\d+:\d+:\d+"#, options: .regularExpression), text)
+        }
+    }
+
     func testCreateEditToggleDelete() {
         launch()
         XCTAssertTrue(app.staticTexts["No alarms yet"].waitForExistence(timeout: 5))
@@ -126,11 +132,13 @@ final class AlarmingUITests: XCTestCase {
         capture("5-edit")
         chooseStyle("Divide")
         XCTAssertTrue(app.segmentedControls.buttons["Linear"].exists && app.segmentedControls.buttons["÷ 2"].isSelected)
-        expectWake("6:58:07")
+        expectWake("6:59")
+        expectNoSeconds()
         let two = app.buttons["Snoozes, 2"]
         reveal(two)
         two.tap()
-        expectWake("6:52:30")
+        expectWake("6:53")
+        expectNoSeconds()
         XCTAssertTrue(two.isSelected)
         XCTAssertFalse(app.buttons["Snoozes, 5"].isEnabled)
         capture("6-edit-options")

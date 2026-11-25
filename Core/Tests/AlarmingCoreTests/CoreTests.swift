@@ -28,8 +28,8 @@ private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: 
 
     @Test func halfExample() {
         let policy = SnoozePolicy(firstMinutes: 10, style: .multiply(.half), limit: 3)
-        #expect(policy.intervals == [600, 300, 150])
-        #expect(policy.projectedWake(from: date(2026, 12, 1, 7, 0)) == date(2026, 12, 1, 7, 17, 30))
+        #expect(policy.intervals == [600, 300, 180])
+        #expect(policy.projectedWake(from: date(2026, 12, 1, 7, 0)) == date(2026, 12, 1, 7, 18))
     }
 
     @Test func constantLimitAndNoLimit() {
@@ -64,7 +64,7 @@ private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: 
         let policy = SnoozePolicy(firstMinutes: first, style: .multiply(fraction))
         let intervals = try #require(policy.intervals)
         #expect(intervals.first == first * 60)
-        #expect(zip(intervals, intervals.dropFirst()).allSatisfy { $0 > $1 })
+        #expect(zip(intervals, intervals.dropFirst()).allSatisfy { $0 >= $1 })
         let ratio = Double(fraction.numerator) / Double(fraction.denominator)
         #expect(intervals.allSatisfy { $0 >= 60 })
         // The next one must genuinely be too short, proving the safety bound did not cut it off.

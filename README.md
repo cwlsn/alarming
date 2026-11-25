@@ -11,7 +11,7 @@ An iPhone alarm clock whose snoozes get shorter. Choose when it first rings, how
 ## What it does
 
 - **Rings through Silent mode and Focus**, using Apple's AlarmKit.
-- **Snooze styles**: Linear (every snooze the same), Subtract (minutes shorter each time), Divide (a fraction of the one before) or Off. Snoozes shorter than a minute end the chain.
+- **Snooze styles**: Linear (every snooze the same), Subtract (minutes shorter each time), Divide (a fraction of the one before) or Off. Uneven divisions round up to the next minute, and snoozes shorter than a minute end the chain.
 - **Wake-up graph**: the time of each ring, climbing to when you will be up. Drag across it to read a ring.
 - **Quick add**: type `7:30 weekdays gym` or `in 20m nap`.
 - **Day groups**: your own sets of days, beside Daily, Weekdays and Weekends.
