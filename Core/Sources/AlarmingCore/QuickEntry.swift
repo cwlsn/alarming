@@ -7,6 +7,11 @@ public enum QuickEntry {
         public var minute: Int
         public var days: Set<Locale.Weekday>
         public var label: String
+
+        /// Typed alarms without days are one-time, so quick reminders do not pile up.
+        public var alarm: AlarmDefinition {
+            AlarmDefinition(hour: hour, minute: minute, days: days, label: label, isOneTime: days.isEmpty)
+        }
     }
 
     private static let dayWords: [String: Set<Locale.Weekday>] = [

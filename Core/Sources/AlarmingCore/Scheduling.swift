@@ -24,11 +24,11 @@ public struct RingRequest: Sendable, Equatable {
         self.timing = timing
     }
 
-    public var nextSnooze: Int? { alarm.snooze.interval(after: step) }
+    public var nextSnooze: Int? { alarm.effectiveSnooze.interval(after: step) }
     /// After a snooze, iOS 27.2 shows nothing for a countdown ring with only a Stop button.
     public var needsEndButton: Bool { nextSnooze == nil && timing != .base }
     /// `nil` when there is no end.
-    public var snoozesLeft: Int? { alarm.snooze.intervals.map { max(0, $0.count - step) } }
+    public var snoozesLeft: Int? { alarm.effectiveSnooze.intervals.map { max(0, $0.count - step) } }
 }
 
 public protocol AlarmClient: Sendable {
@@ -63,7 +63,7 @@ public actor SnoozeCoordinator {
     public func snooze(currentID: UUID, alarm: AlarmDefinition, step: Int) async throws -> Outcome {
         guard inFlight.insert(currentID).inserted else { return .duplicate }
         defer { inFlight.remove(currentID) }
-        guard let seconds = alarm.snooze.interval(after: step) else { return .noSnoozeLeft }
+        guard let seconds = alarm.effectiveSnooze.interval(after: step) else { return .noSnoozeLeft }
 
         let next = SnoozeSlot.id(for: alarm.id, step: step)
         let rings = try client.rings()
