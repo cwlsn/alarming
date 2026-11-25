@@ -124,7 +124,7 @@ private func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: 
     }
 
     @Test func repeatSummaries() {
-        #expect(RepeatDays.summary([], calendar: newYork) == "Once")
+        #expect(RepeatDays.summary([], calendar: newYork) == "No repeat")
         #expect(RepeatDays.summary(RepeatDays.everyDay, calendar: newYork) == "Every day")
         #expect(RepeatDays.summary(RepeatDays.weekdays, calendar: newYork) == "Weekdays")
         #expect(RepeatDays.summary(RepeatDays.weekends, calendar: newYork) == "Weekends")

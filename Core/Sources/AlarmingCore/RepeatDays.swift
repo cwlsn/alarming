@@ -27,7 +27,7 @@ public enum RepeatDays {
     }
 
     public static func summary(_ days: Set<Locale.Weekday>, calendar: Calendar = .current) -> String {
-        if days.isEmpty { return "Once" }
+        if days.isEmpty { return "No repeat" }
         if days == everyDay { return "Every day" }
         if days == weekdays { return "Weekdays" }
         if days == weekends { return "Weekends" }

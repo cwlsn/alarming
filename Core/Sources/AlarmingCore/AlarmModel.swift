@@ -40,13 +40,17 @@ public final class AlarmModel {
     @ObservationIgnored private let client: any AlarmClient
     @ObservationIgnored private let file: AlarmFile
     @ObservationIgnored private let publish: @MainActor ([AlarmDefinition]) -> Void
+    @ObservationIgnored private let now: @Sendable () -> Date
     @ObservationIgnored private var loaded = false
     @ObservationIgnored private var operation: Task<Void, Never>?
 
     /// `publish` receives the alarms that will ring, after every operation.
-    public init(client: any AlarmClient, file: AlarmFile, publish: @escaping @MainActor ([AlarmDefinition]) -> Void = { _ in }) {
+    public init(client: any AlarmClient, file: AlarmFile,
+                publish: @escaping @MainActor ([AlarmDefinition]) -> Void = { _ in },
+                now: @escaping @Sendable () -> Date = { .now }) {
         self.client = client
         self.file = file
+        self.now = now
         self.publish = publish
         try? loadIfNeeded()
     }
@@ -72,7 +76,7 @@ public final class AlarmModel {
         try await exclusively { try await self.replace(id, with: nil) }
     }
 
-    /// Called after a ring ends. A one-time alarm is finished once stopped.
+    /// Called after a ring ends. An alarm without days is finished once stopped, and a one-time alarm is deleted.
     public func ringEnded(alarmID: UUID) async throws {
         try await exclusively {
             try self.loadIfNeeded()
@@ -81,7 +85,11 @@ public final class AlarmModel {
             // The user may have re-armed it already.
             guard try self.client.rings()[alarmID] == nil else { return }
             var updated = self.alarms
-            updated[index].isEnabled = false
+            if updated[index].isOneTime {
+                updated.remove(at: index)
+            } else {
+                updated[index].isEnabled = false
+            }
             try self.file.save(updated)
             self.alarms = updated
         }
@@ -97,16 +105,25 @@ public final class AlarmModel {
             var updated = self.alarms
             var expected: Set<UUID> = []
             var missing: [AlarmDefinition] = []
+            var finished: Set<UUID> = []
             for index in updated.indices where updated[index].isEnabled {
                 let alarm = updated[index]
                 let slots = SnoozeSlot.all(for: alarm.id)
                 if alarm.days.isEmpty, rings[alarm.id] == nil, !slots.contains(where: { rings[$0] != nil }) {
-                    updated[index].isEnabled = false
+                    // Only a one-time alarm whose time has passed has rung. One that vanished early,
+                    // such as after a restore to a new phone, is turned off instead of deleted.
+                    if alarm.isOneTime, let firesAt = alarm.firesAt, firesAt <= self.now() {
+                        finished.insert(alarm.id)
+                    } else {
+                        updated[index].isEnabled = false
+                        updated[index].firesAt = nil
+                    }
                 } else {
                     expected.formUnion(slots + [alarm.id])
                     if !alarm.days.isEmpty, rings[alarm.id] == nil { missing.append(alarm) }
                 }
             }
+            updated.removeAll { finished.contains($0.id) }
             if updated != self.alarms {
                 try self.file.save(updated)
                 self.alarms = updated
@@ -118,6 +135,11 @@ public final class AlarmModel {
 
     private func replace(_ id: UUID, with alarm: AlarmDefinition?) async throws {
         try loadIfNeeded()
+        var alarm = alarm
+        if let ring = alarm {
+            // The same calculation AlarmKit makes for a time that does not repeat.
+            alarm?.firesAt = ring.isOneTime && ring.isEnabled ? ring.nextOccurrence(after: now()) : nil
+        }
         let previous = alarms.first { $0.id == id }
         if alarm?.isEnabled == true {
             let authorized = try await client.authorize()

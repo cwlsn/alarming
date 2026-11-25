@@ -2,8 +2,16 @@ import AlarmingCore
 import SwiftUI
 
 struct AlarmListView: View {
+    /// Whether it is new is decided when the editor opens. Adding it, or a one-time alarm ringing
+    /// and disappearing, must not turn the open editor into the other kind.
+    private struct Editing: Identifiable {
+        let alarm: AlarmDefinition
+        let isNew: Bool
+        var id: UUID { alarm.id }
+    }
+
     let model: AlarmModel
-    @State private var editing: AlarmDefinition?
+    @State private var editing: Editing?
     @State private var errorMessage: String?
     @State private var savedCount = 0
     @Namespace private var zoom
@@ -24,13 +32,12 @@ struct AlarmListView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.canvas.ignoresSafeArea())
         .safeAreaInset(edge: .bottom) {
-            QuickEntryBar(addSource: Self.addSource, zoom: zoom, create: create) { editing = blank() }
+            QuickEntryBar(addSource: Self.addSource, zoom: zoom, create: create) { editing = Editing(alarm: blank(), isNew: true) }
         }
         .animation(.smooth(duration: 0.35), value: model.alarms)
-        .sheet(item: $editing) { alarm in
-            let isNew = !model.alarms.contains { $0.id == alarm.id }
-            AlarmEditorView(model: model, alarm: alarm, isNew: isNew) { savedCount += 1 } onError: { errorMessage = $0 }
-                .navigationTransition(.zoom(sourceID: isNew ? AnyHashable(Self.addSource) : AnyHashable(alarm.id), in: zoom))
+        .sheet(item: $editing) { editing in
+            AlarmEditorView(model: model, alarm: editing.alarm, isNew: editing.isNew) { savedCount += 1 } onError: { errorMessage = $0 }
+                .navigationTransition(.zoom(sourceID: editing.isNew ? AnyHashable(Self.addSource) : AnyHashable(editing.id), in: zoom))
         }
         .alert("Alarm not changed", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") {}
@@ -50,7 +57,7 @@ struct AlarmListView: View {
             }
             if !model.alarms.isEmpty { header(next?.1, now: now) }
             ForEach(model.alarms) { alarm in
-                AlarmRow(alarm: alarm, now: now, isOn: binding(for: alarm)) { editing = alarm }
+                AlarmRow(alarm: alarm, now: now, isOn: binding(for: alarm)) { editing = Editing(alarm: alarm, isNew: false) }
                     .matchedTransitionSource(id: alarm.id, in: zoom)
                     .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
                     .listRowSeparatorTint(.hairline)
@@ -110,7 +117,7 @@ struct AlarmListView: View {
     }
 
     private func create(_ entry: QuickEntry.Result) async -> Bool {
-        let alarm = Services.newAlarms.apply(to: AlarmDefinition(hour: entry.hour, minute: entry.minute, days: entry.days, label: entry.label))
+        let alarm = Services.newAlarms.apply(to: entry.alarm)
         do {
             try await model.save(alarm)
             savedCount += 1
@@ -125,7 +132,7 @@ struct AlarmListView: View {
         run {
             try await model.save(AlarmDefinition(
                 hour: alarm.hour, minute: alarm.minute, days: alarm.days, label: alarm.label,
-                tone: alarm.tone, snooze: alarm.snooze, isEnabled: alarm.isEnabled))
+                tone: alarm.tone, snooze: alarm.snooze, isEnabled: alarm.isEnabled, isOneTime: alarm.isOneTime))
         }
     }
 
@@ -201,10 +208,10 @@ private struct QuickEntryBar: View {
 
     @ViewBuilder private func preview(_ entry: QuickEntry.Result?) -> some View {
         if let entry {
-            let alarm = AlarmDefinition(hour: entry.hour, minute: entry.minute, days: entry.days, label: entry.label)
+            let alarm = entry.alarm
             let next = alarm.nextOccurrence(after: .now) ?? .now
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(ClockText.string(next)) · \(alarm.displayLabel) · \(RepeatDays.summary(alarm.days))")
+                Text("\(ClockText.string(next)) · \(alarm.displayLabel) · \(alarm.repeatSummary())")
                     .font(.subheadline.weight(.semibold))
                 Text(TimeText.ringsIn(next, now: .now)).font(.footnote).foregroundStyle(Color.quiet)
             }
@@ -296,7 +303,8 @@ private struct AlarmRow: View {
     @ScaledMetric(relativeTo: .title) private var timeSize = 28
 
     private var next: Date { alarm.nextOccurrence(after: now) ?? now }
-    private var wake: Date? { alarm.snooze.isEnabled ? alarm.snooze.projectedWake(from: next) : nil }
+    private var snoozePolicy: SnoozePolicy { alarm.effectiveSnooze }
+    private var wake: Date? { snoozePolicy.isEnabled ? snoozePolicy.projectedWake(from: next) : nil }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -317,20 +325,20 @@ private struct AlarmRow: View {
                                 .minimumScaleFactor(0.5)
                                 .contentTransition(.numericText())
                                 .foregroundStyle(isOn ? Color.primary : Color.quiet)
-                            Text("\(alarm.displayLabel) · \(RepeatDays.summary(alarm.days))")
+                            subtitle
                                 .font(.footnote)
                                 .foregroundStyle(Color.quiet)
                                 .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        if alarm.snooze.isEnabled { snooze }
+                        if snoozePolicy.isEnabled { snooze }
                     }
                 }
                 .padding(.vertical, 24)
                 .contentShape(.rect)
             }
             .buttonStyle(SpringyButtonStyle(scale: 0.98))
-            .accessibilityValue(alarm.snooze.summary)
+            .accessibilityValue(snoozePolicy.summary)
             .accessibilityHint("Edits this alarm")
             .accessibilityIdentifier("alarm-row")
             Toggle("\(alarm.displayLabel) on", isOn: $isOn).labelsHidden().tint(.accentFill)
@@ -338,6 +346,11 @@ private struct AlarmRow: View {
         .animation(.smooth(duration: 0.35), value: isOn)
         .animation(.spring(duration: 0.5, bounce: 0.25), value: alarm)
         .sensoryFeedback(trigger: isOn) { _, on in on ? .impact(flexibility: .soft) : .impact(weight: .light) }
+    }
+
+    private var subtitle: Text {
+        let text = "\(alarm.displayLabel) · \(alarm.repeatSummary())"
+        return alarm.isOneTime ? Text("\(text) \(Image(decorative: "Poof"))") : Text(text)
     }
 
     private var bar: LinearGradient {
@@ -352,7 +365,7 @@ private struct AlarmRow: View {
                 .monospacedDigit()
                 .foregroundStyle(isOn && wake != nil ? Color.accentText : Color.quiet)
                 .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
-            SnoozeLadder(intervals: alarm.snooze.intervals, height: 4,
+            SnoozeLadder(intervals: snoozePolicy.intervals, height: 4,
                          style: isOn ? nil : AnyShapeStyle(Color.secondary.opacity(0.4)))
                 .frame(width: 84)
         }

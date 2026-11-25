@@ -14,6 +14,7 @@ struct AlarmEditorView: View {
     @State private var isDeleted = false
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     init(model: AlarmModel, alarm: AlarmDefinition, isNew: Bool,
          onSave: @escaping () -> Void, onError: @escaping (String) -> Void) {
@@ -34,11 +35,20 @@ struct AlarmEditorView: View {
                 VStack(spacing: 0) {
                     wheel
                     VStack(spacing: 26) {
-                        DayPicker(days: $draft.days)
+                        DayPicker(days: $draft.days, isOneTime: $draft.isOneTime)
                         Divider()
                         TonePicker(tone: $draft.tone)
                         Divider()
-                        SnoozeSettingsView(policy: $draft.snooze, start: draft.nextOccurrence(after: .now) ?? .now)
+                        if draft.isOneTime {
+                            Label("Rings once without snooze, then disappears when you stop it.", image: "Poof")
+                                .font(.subheadline)
+                                .foregroundStyle(Color.quiet)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .transition(.opacity)
+                        } else {
+                            SnoozeSettingsView(policy: $draft.snooze, start: draft.nextOccurrence(after: .now) ?? .now)
+                                .transition(.opacity)
+                        }
                         if !isNew {
                             Divider()
                             Button("Delete alarm", role: .destructive, action: delete)
@@ -52,6 +62,8 @@ struct AlarmEditorView: View {
                 }
             }
             .background(Color.canvas.ignoresSafeArea())
+            .safeAreaBar(edge: .bottom) { if isNew { addBar } }
+            .animation(.smooth(duration: 0.3), value: draft.isOneTime)
             .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
@@ -68,9 +80,7 @@ struct AlarmEditorView: View {
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            if isNew {
-                Button("Cancel") { dismiss() }
-            } else if draft != original {
+            if !isNew, draft != original {
                 Button("Revert", systemImage: "arrow.uturn.backward") { withAnimation(.smooth) { draft = original } }
             }
         }
@@ -83,9 +93,47 @@ struct AlarmEditorView: View {
                 .accessibilityLabel("Label")
         }
         ToolbarItem(placement: .confirmationAction) {
-            Button(isNew ? "Add" : "Done") { isNew ? add() : dismiss() }
-                .buttonStyle(.glassProminent)
-                .tint(.accentFill)
+            Group {
+                if isNew {
+                    Button("Add", systemImage: "checkmark", action: add)
+                        .accessibilityIdentifier("add-top")
+                } else {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .buttonStyle(.glassProminent)
+            .tint(.accentFill)
+        }
+    }
+
+    /// Within reach of a thumb, where the header buttons are not.
+    private var addBar: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return layout {
+            Button { dismiss() } label: {
+                Text("Cancel").frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(.glass)
+            .accessibilityIdentifier("cancel-bottom")
+            Button(action: add) {
+                Text("Add").frame(maxWidth: .infinity, minHeight: 50)
+            }
+            .buttonStyle(.glassProminent)
+            .tint(.accentFill)
+            .accessibilityIdentifier("add-bottom")
+        }
+        .font(.headline)
+        .buttonBorderShape(.capsule)
+        .padding(.horizontal, 20)
+        .padding(.top, 28)
+        .padding(.bottom, 8)
+        // Content fades out above the buttons rather than showing through their glass.
+        .background {
+            LinearGradient(stops: [.init(color: Color.canvas.opacity(0), location: 0), .init(color: Color.canvas, location: 0.4)],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea(edges: .bottom)
         }
     }
 
@@ -186,6 +234,7 @@ struct AlarmEditorView: View {
 
 private struct DayPicker: View {
     @Binding var days: Set<Locale.Weekday>
+    @Binding var isOneTime: Bool
     @State private var editsGroups = false
 
     private let presets: [(String, Set<Locale.Weekday>)] = [
@@ -196,6 +245,13 @@ private struct DayPicker: View {
         VStack(alignment: .leading, spacing: 14) {
             DayRow(days: $days)
             ChipScroll {
+                Button { isOneTime.toggle() } label: {
+                    Chip(isSelected: isOneTime) {
+                        Image("Poof").accessibilityHidden(true)
+                        Text(AlarmDefinition.oneTimeName)
+                    }
+                }
+                .accessibilityAddTraits(isOneTime ? .isSelected : [])
                 ForEach(presets, id: \.0) { chip($0, $1) }
                 ForEach(DayGroupStore.shared.groups) { group in
                     chip(group.title, group.days).accessibilityLabel(RepeatDays.summary(group.days))
@@ -208,6 +264,7 @@ private struct DayPicker: View {
             .buttonStyle(SpringyButtonStyle())
         }
         .animation(.spring(duration: 0.35, bounce: 0.35), value: days)
+        .animation(.spring(duration: 0.35, bounce: 0.35), value: isOneTime)
         .sheet(isPresented: $editsGroups) { DayGroupsView() }
     }
 

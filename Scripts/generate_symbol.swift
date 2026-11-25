@@ -1,22 +1,63 @@
-// The app icon's clock as a one-color symbol for widgets and Control Center.
-// Run: swift Scripts/generate_symbol.swift Shared/Symbols.xcassets/CatClock.symbolset/CatClock.svg
+// One-color symbols for the app, widgets and Control Center, on Apple's symbol template.
+// Run: swift Scripts/generate_symbol.swift CatClock Shared/Symbols.xcassets/CatClock.symbolset/CatClock.svg
+//      swift Scripts/generate_symbol.swift Poof Shared/Symbols.xcassets/Poof.symbolset/Poof.svg
 import CoreGraphics
 import Foundation
 
-func point(_ degrees: Double, _ radius: Double, side: Double = 1) -> CGPoint {
-    CGPoint(x: side * radius * cos(degrees * .pi / 180), y: -radius * sin(degrees * .pi / 180))
+/// The app icon's clock.
+func catClock() -> CGPath {
+    func point(_ degrees: Double, _ radius: Double, side: Double = 1) -> CGPoint {
+        CGPoint(x: side * radius * cos(degrees * .pi / 180), y: -radius * sin(degrees * .pi / 180))
+    }
+    var shape: CGPath = CGPath(ellipseIn: CGRect(x: -272, y: -272, width: 544, height: 544), transform: nil)
+    for side in [-1.0, 1.0] {
+        let ear = CGMutablePath()
+        ear.addLines(between: [point(32, 232, side: side), point(53, 360, side: side), point(74, 232, side: side)])
+        ear.closeSubpath()
+        shape = shape.union(ear).union(ear.copy(strokingWithWidth: 44, lineCap: .round, lineJoin: .round, miterLimit: 10))
+    }
+    let hands = CGMutablePath()
+    hands.addLines(between: [point(90, 168), .zero, point(240, 122)])
+    // Heavier than the icon's, to survive small sizes.
+    return shape.subtracting(hands.copy(strokingWithWidth: 64, lineCap: .round, lineJoin: .round, miterLimit: 10))
 }
-var shape: CGPath = CGPath(ellipseIn: CGRect(x: -272, y: -272, width: 544, height: 544), transform: nil)
-for side in [-1.0, 1.0] {
-    let ear = CGMutablePath()
-    ear.addLines(between: [point(32, 232, side: side), point(53, 360, side: side), point(74, 232, side: side)])
-    ear.closeSubpath()
-    shape = shape.union(ear).union(ear.copy(strokingWithWidth: 44, lineCap: .round, lineJoin: .round, miterLimit: 10))
+
+/// A puff of smoke with sparkles, for one-time alarms.
+func poof() -> CGPath {
+    func circle(_ x: Double, _ y: Double, _ r: Double) -> CGPath {
+        CGPath(ellipseIn: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r), transform: nil)
+    }
+    func sparkle(_ x: Double, _ y: Double, _ r: Double) -> CGPath {
+        let path = CGMutablePath(), w = r * 0.28
+        path.move(to: CGPoint(x: x, y: y - r))
+        path.addQuadCurve(to: CGPoint(x: x + r, y: y), control: CGPoint(x: x + w, y: y - w))
+        path.addQuadCurve(to: CGPoint(x: x, y: y + r), control: CGPoint(x: x + w, y: y + w))
+        path.addQuadCurve(to: CGPoint(x: x - r, y: y), control: CGPoint(x: x - w, y: y + w))
+        path.addQuadCurve(to: CGPoint(x: x, y: y - r), control: CGPoint(x: x - w, y: y - w))
+        path.closeSubpath()
+        return path
+    }
+    var shape: CGPath = circle(0, 20, 165)
+    for (x, y, r) in [(-165.0, 70.0, 112.0), (165, 70, 112), (-100, -110, 118), (105, -105, 112), (-45, 150, 100), (70, 148, 96)] {
+        shape = shape.union(circle(x, y, r))
+    }
+    // Curls inside read as smoke rather than a cloud.
+    let curls = CGMutablePath()
+    curls.addArc(center: CGPoint(x: -70, y: 70), radius: 78, startAngle: .pi * 0.95, endAngle: .pi * 0.45, clockwise: true)
+    curls.move(to: CGPoint(x: 150, y: 40))
+    curls.addArc(center: CGPoint(x: 95, y: 25), radius: 58, startAngle: 0.25, endAngle: -.pi * 0.55, clockwise: true)
+    shape = shape.subtracting(curls.copy(strokingWithWidth: 38, lineCap: .round, lineJoin: .round, miterLimit: 10))
+    for (x, y, r) in [(-300.0, -235.0, 80.0), (305, -215, 62), (310, 205, 46)] { shape = shape.union(sparkle(x, y, r)) }
+    // Wider than the clock, so smaller to sit at the same weight beside text.
+    var scale = CGAffineTransform(scaleX: 0.78, y: 0.78)
+    return shape.copy(using: &scale)!
 }
-let hands = CGMutablePath()
-hands.addLines(between: [point(90, 168), .zero, point(240, 122)])
-// Heavier than the icon's, to survive small sizes.
-shape = shape.subtracting(hands.copy(strokingWithWidth: 64, lineCap: .round, lineJoin: .round, miterLimit: 10))
+
+let shapes = ["CatClock": catClock, "Poof": poof]
+guard CommandLine.arguments.count == 3, let make = shapes[CommandLine.arguments[1]] else {
+    fatalError("Usage: generate_symbol.swift <\(shapes.keys.sorted().joined(separator: "|"))> <output.svg>")
+}
+let shape = make()
 
 let scale = 0.175, box = shape.boundingBoxOfPath
 // Centered between the template's small baseline (696) and capline (625.541).
@@ -66,4 +107,4 @@ let svg = """
  </g>
 </svg>
 """
-try svg.write(toFile: CommandLine.arguments[1], atomically: true, encoding: .utf8)
+try svg.write(toFile: CommandLine.arguments[2], atomically: true, encoding: .utf8)
