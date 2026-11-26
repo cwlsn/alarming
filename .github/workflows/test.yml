@@ -1,0 +1,63 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  XCODE_VERSION: "27.2"
+  XCODEGEN_VERSION: "2.48.0"
+  SIMULATOR: "platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2"
+
+jobs:
+  core:
+    name: Core tests
+    runs-on: xcode-27
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+      - name: Run tests
+        working-directory: Core
+        run: swift test
+
+  ui:
+    name: UI tests
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+      - name: Install XcodeGen
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/xcodegen.zip" \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Generate project
+        run: xcodegen generate
+      - name: Run tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Alarming.xcodeproj \
+            -scheme Alarming \
+            -destination "$SIMULATOR" \
+            -resultBundlePath "$RUNNER_TEMP/UITests.xcresult"
+      - name: Upload results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: UITests.xcresult
+          path: ${{ runner.temp }}/UITests.xcresult
