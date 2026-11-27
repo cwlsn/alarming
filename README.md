@@ -10,16 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/cwlsn/alarming/actions/workflows/test.yml"><img src="https://github.com/cwlsn/alarming/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
-  <img src="https://img.shields.io/badge/iOS-26.1%2B-2563eb" alt="iOS 26.1 or later">
-  <img src="https://img.shields.io/badge/Swift-6-f05138" alt="Swift 6">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-16a34a" alt="MIT license"></a>
+  <a href="https://github.com/cwlsn/alarming/actions/workflows/test.yml"><img src="https://github.com/cwlsn/alarming/actions/workflows/test.yml/badge.svg" alt="Tests"></a><br>
+  <sub>iOS 26.1 or later · Swift 6 · <a href="LICENSE">MIT license</a></sub>
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/list.png" width="260" alt="The alarm list, with when each alarm leaves you up and its snoozes drawn as shrinking bars">
-  <img src="docs/screenshots/editor.png" width="260" alt="The alarm editor: a wake-up graph above snooze styles, first snooze length and number of snoozes">
-  <img src="docs/screenshots/editor-dark.png" width="260" alt="The alarm editor in dark mode">
+  <img src="docs/screenshots/list.png" width="240" alt="The alarm list, with when each alarm leaves you up and its snoozes drawn as shrinking bars">
+  <img src="docs/screenshots/editor.png" width="240" alt="The alarm editor: a wake-up graph above snooze styles, first snooze length and number of snoozes">
+  <img src="docs/screenshots/editor-dark.png" width="240" alt="The alarm editor in dark mode">
 </p>
 
 Most alarms snooze for the same length every time, so "five more minutes" quietly becomes an hour. Alarming makes each snooze shorter than the one before, and before you go to sleep it shows the time you will really be out of bed.
@@ -39,10 +37,10 @@ New alarms start at 15 minutes, minus 5 each time, for 2 snoozes, and then repea
 
 <table>
   <tr>
-    <td align="center" width="25%"><img src="docs/screenshots/quick-add.png" width="180" alt="Typing gym 7:30am weekdays into the quick add field"><br><b>Quick add</b><br><sub>Type it the way you would say it</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/one-time.png" width="180" alt="A one-time alarm in the editor"><br><b>One-time</b><br><sub>Rings once, then gets out of the way</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/day-groups.png" width="180" alt="Editing day groups"><br><b>Day groups</b><br><sub>Your own sets of days</sub></td>
-    <td align="center" width="25%"><img src="docs/screenshots/sounds.png" width="180" alt="The sound menu"><br><b>Sounds</b><br><sub>Eight tones made for waking up</sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/quick-add.png" width="180" alt="Typing gym 7:30am weekdays into the quick add field"><br><b>Quick add</b><br><sub>Just type <code>7:30 gym</code></sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/one-time.png" width="180" alt="A one-time alarm in the editor"><br><b>One-time</b><br><sub>Rings once, then goes</sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/day-groups.png" width="180" alt="Editing day groups"><br><b>Day groups</b><br><sub>Your own sets of days</sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/sounds.png" width="180" alt="The sound menu"><br><b>Sounds</b><br><sub>Eight wake-up tones</sub></td>
   </tr>
 </table>
 
