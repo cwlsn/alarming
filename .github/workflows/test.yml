@@ -16,8 +16,7 @@ permissions:
 env:
   XCODE_VERSION: "27.2"
   XCODEGEN_VERSION: "2.48.0"
-  SIMULATOR_NAME: "iPhone 18 Pro"
-  SIMULATOR_RUNTIME: "com.apple.CoreSimulator.SimRuntime.iOS-27-2"
+  SIMULATOR: "platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2"
 
 jobs:
   core:
@@ -40,18 +39,6 @@ jobs:
       - uses: actions/checkout@v7
       - name: Select Xcode
         run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
-      - name: Boot simulator
-        # A fresh simulator takes minutes to boot. Starting now overlaps that with the build.
-        run: |
-          udid=$(xcrun simctl list devices available -j |
-            jq -r --arg runtime "$SIMULATOR_RUNTIME" --arg name "$SIMULATOR_NAME" \
-              '.devices[$runtime][]? | select(.name == $name) | .udid' | head -n 1)
-          if [ -z "$udid" ]; then
-            echo "::error::No $SIMULATOR_NAME simulator for $SIMULATOR_RUNTIME"
-            exit 1
-          fi
-          xcrun simctl boot "$udid"
-          echo "SIMULATOR_ID=$udid" >> "$GITHUB_ENV"
       - name: Install XcodeGen
         run: |
           curl -fsSL -o "$RUNNER_TEMP/xcodegen.zip" \
@@ -66,7 +53,7 @@ jobs:
           xcodebuild test \
             -project Alarming.xcodeproj \
             -scheme Alarming \
-            -destination "id=$SIMULATOR_ID" \
+            -destination "$SIMULATOR" \
             -resultBundlePath "$RUNNER_TEMP/UITests.xcresult"
       - name: Upload results
         if: failure()
