@@ -5,11 +5,21 @@ import SwiftUI
 struct AlarmingApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        // UI tests wait for animations to settle after every step, so they run without them.
+        if Services.isUITesting { UIView.setAnimationsEnabled(false) }
+    }
+
     var body: some Scene {
         WindowGroup {
             AlarmListView(model: Services.model)
                 .tint(Color.accentText)
                 .preferredColorScheme(Services.forcesDark ? .dark : nil)
+                .transaction {
+                    guard Services.isUITesting else { return }
+                    $0.animation = nil
+                    $0.disablesAnimations = true
+                }
                 .task {
                     #if DEBUG
                     if Services.isSeeded { await Services.seed() }
