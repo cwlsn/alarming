@@ -16,7 +16,8 @@ permissions:
 env:
   XCODE_VERSION: "27.2"
   XCODEGEN_VERSION: "2.48.0"
-  SIMULATOR: "platform=iOS Simulator,name=iPhone 18 Pro,OS=27.2"
+  DEVICE: "iPhone 18 Pro"
+  IOS_VERSION: "27.2"
 
 jobs:
   core:
@@ -47,13 +48,29 @@ jobs:
           echo "$RUNNER_TEMP/xcodegen/bin" >> "$GITHUB_PATH"
       - name: Generate project
         run: xcodegen generate
-      - name: Run tests
+      - name: Find simulator
         run: |
-          set -o pipefail
-          xcodebuild test \
+          id=$(xcrun simctl list devices available -j | jq -er --arg runtime "iOS-${IOS_VERSION//./-}" --arg device "$DEVICE" \
+            '[.devices | to_entries[] | select(.key | endswith($runtime)) | .value[] | select(.name == $device)][0].udid')
+          echo "SIMULATOR_ID=$id" >> "$GITHUB_ENV"
+      - name: Build
+        run: |
+          xcodebuild build-for-testing \
             -project Alarming.xcodeproj \
             -scheme Alarming \
-            -destination "$SIMULATOR" \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData"
+      # Booted by xcodebuild, the simulator is still starting up when the first test launches the app, which
+      # then times out. Booting during the build slows both, so it happens here and finishes before testing.
+      - name: Boot simulator
+        run: xcrun simctl bootstatus "$SIMULATOR_ID" -b
+      - name: Run tests
+        run: |
+          xcodebuild test-without-building \
+            -project Alarming.xcodeproj \
+            -scheme Alarming \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
             -resultBundlePath "$RUNNER_TEMP/UITests.xcresult"
       - name: Upload results
         if: failure()
