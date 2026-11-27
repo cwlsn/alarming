@@ -27,7 +27,7 @@ struct WakeChart: View {
 
     var body: some View {
         let points = points
-        let focus = selected.map { points[min(max(Int($0.rounded()), 0), points.count - 1)] }
+        let focus = selected.map { points[min(max(Int(($0 * Double(points.count - 1)).rounded()), 0), points.count - 1)] }
         VStack(alignment: .leading, spacing: 10) {
             Text(focus.map(readout) ?? "Ring time after each snooze")
                 .font(.footnote)
@@ -57,21 +57,21 @@ struct WakeChart: View {
 
     private func chart(_ points: [Point], focus: Point?) -> some View {
         let span = elapsed(points[points.count - 1])
-        // Headroom keeps the end markers clear of the plot's edges.
-        let room = span * 0.1
+        let x = { (id: Int) in points.count > 1 ? Double(id) / Double(points.count - 1) : 0 }
+        let y = { (seconds: Double) in span > 0 ? seconds / span : 0 }
         return Chart {
             ForEach(points) { point in
-                LineMark(x: .value("Snooze", Double(point.id)), y: .value("Time", elapsed(point)))
+                LineMark(x: .value("Snooze", x(point.id)), y: .value("Time", y(elapsed(point))))
                     .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round, dash: isOpen ? [2, 6] : []))
                     .foregroundStyle(Color.accentText)
             }
             if let focus {
-                RuleMark(x: .value("Snooze", Double(focus.id)))
+                RuleMark(x: .value("Snooze", x(focus.id)))
                     .lineStyle(StrokeStyle(lineWidth: 1))
                     .foregroundStyle(Color.quiet.opacity(0.5))
             }
             ForEach(points) { point in
-                PointMark(x: .value("Snooze", Double(point.id)), y: .value("Time", elapsed(point)))
+                PointMark(x: .value("Snooze", x(point.id)), y: .value("Time", y(elapsed(point))))
                     .symbol {
                         Circle()
                             .fill(Color.accentText)
@@ -81,23 +81,27 @@ struct WakeChart: View {
                     }
             }
         }
-        .chartYScale(domain: -room...(span + room))
-        .chartXScale(domain: 0...Double(points.count - 1), range: .plotDimension(padding: 16))
+        // Changing domains make Swift Charts lay out invalid frames mid-animation, so both stay fixed and
+        // the points move instead. Headroom keeps the end markers clear of the plot's edges.
+        .chartYScale(domain: -0.1...1.1)
+        .chartXScale(domain: 0...1, range: .plotDimension(padding: 16))
         .chartYAxis {
-            AxisMarks(position: .leading, values: labeledTimes(points)) { value in
+            AxisMarks(position: .leading, values: labeledTimes(points).map(y)) { value in
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 1)).foregroundStyle(Color.hairline)
                 AxisValueLabel(collisionResolution: .disabled) {
-                    if let seconds = value.as(Double.self) {
-                        Text(ClockText.string(start.addingTimeInterval(seconds))).font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
+                    if let fraction = value.as(Double.self) {
+                        // Rings fall on whole minutes, so rounding to the second undoes the division exactly.
+                        Text(ClockText.string(start.addingTimeInterval((fraction * span).rounded())))
+                            .font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
                     }
                 }
             }
         }
         .chartXAxis {
-            AxisMarks(values: labeledSnoozes(points)) { value in
+            AxisMarks(values: labeledSnoozes(points).map { x(Int($0)) }) { value in
                 AxisValueLabel(anchor: .top, collisionResolution: .disabled, horizontalSpacing: 0) {
-                    if let number = value.as(Double.self) {
-                        Text("\(Int(number))").font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
+                    if let fraction = value.as(Double.self) {
+                        Text("\(Int((fraction * Double(points.count - 1)).rounded()))").font(.caption).monospacedDigit().foregroundStyle(Color.quiet)
                     }
                 }
             }
@@ -106,7 +110,7 @@ struct WakeChart: View {
         .chartLegend(.hidden)
     }
 
-    /// Plotted as seconds because charts draw later dates lower.
+    /// Seconds since the alarm, because charts draw later dates lower.
     private func elapsed(_ point: Point) -> Double { point.date.timeIntervalSince(start) }
 
     /// The first and last ring always, and any between with room for its label.
