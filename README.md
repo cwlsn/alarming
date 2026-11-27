@@ -1,12 +1,26 @@
-# Alarming
-
-An iPhone alarm clock whose snoozes get shorter. Choose when it first rings, how long the first snooze lasts and how it shrinks, and the app shows when you will actually be up.
-
-<p>
-<img src="docs/list.png" width="240" alt="The alarm list">
-<img src="docs/editor.png" width="240" alt="The alarm editor with its wake-up graph">
-<img src="docs/editor-dark.png" width="240" alt="The alarm editor in dark mode">
+<p align="center">
+  <img src="docs/logo.png" width="128" height="128" alt="Alarming's icon: a blue alarm clock with cat ears for bells">
 </p>
+
+<h1 align="center">Alarming</h1>
+
+<p align="center">
+  <strong>An iPhone alarm clock whose snoozes get shorter.</strong><br>
+  Choose when it first rings and how each snooze shrinks, and see when you will actually be up.
+</p>
+
+<p align="center">
+  <a href="https://github.com/cwlsn/alarming/actions/workflows/test.yml"><img src="https://github.com/cwlsn/alarming/actions/workflows/test.yml/badge.svg" alt="Tests"></a><br>
+  <sub>iOS 26.1 or later · Swift 6 · <a href="LICENSE">MIT license</a></sub>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/list.png" width="240" alt="The alarm list, with when each alarm leaves you up and its snoozes drawn as shrinking bars">
+  <img src="docs/screenshots/editor.png" width="240" alt="The alarm editor: a wake-up graph above snooze styles, first snooze length and number of snoozes">
+  <img src="docs/screenshots/editor-light.png" width="240" alt="The alarm editor in light mode">
+</p>
+
+Most alarms snooze for the same length every time, so "five more minutes" quietly becomes an hour. Alarming makes each snooze shorter than the one before, and before you go to sleep it shows the time you will really be out of bed.
 
 ## What it does
 
@@ -20,6 +34,15 @@ An iPhone alarm clock whose snoozes get shorter. Choose when it first rings, how
 - **Private**: no account, no network code, no analytics. Alarms stay on the phone.
 
 New alarms start at 15 minutes, minus 5 each time, for 2 snoozes, and then repeat your last choice.
+
+<table>
+  <tr>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/quick-add.png" width="180" alt="Typing gym 7:30am weekdays into the quick add field"><br><b>Quick add</b><br><sub>Just type <code>7:30 gym</code></sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/one-time.png" width="180" alt="A one-time alarm in the editor"><br><b>One-time</b><br><sub>Rings once, then goes</sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/day-groups.png" width="180" alt="Editing day groups"><br><b>Day groups</b><br><sub>Your own sets of days</sub></td>
+    <td align="center" valign="top" width="25%"><img src="docs/screenshots/sounds.png" width="180" alt="The sound menu"><br><b>Sounds</b><br><sub>Eight wake-up tones</sub></td>
+  </tr>
+</table>
 
 ## Build
 
@@ -57,6 +80,8 @@ Check these by hand on a phone before a release:
 - The Live Activity counts down while snoozing, and **End** cancels the snooze.
 - The Home Screen and Lock Screen widgets follow a change, and the Control Center button opens the app.
 
+After a change to how the app looks, run `Scripts/screenshots.sh` to refresh the logo and screenshots in this README. It runs the UI tests on a fresh simulator with a clean status bar and keeps the screens they capture.
+
 ## How it is laid out
 
 | Folder | Contents |
@@ -66,8 +91,8 @@ Check these by hand on a phone before a release:
 | `Shared` | Built into the app and the widget extension: AlarmKit client, alarm buttons, shared colors and symbol |
 | `Widget` | Live Activity, widgets and Control Center button |
 | `UITests` | UI tests, run with `-uiTesting` |
-| `Scripts` | Generate the icon, the symbol and the tones. Each file's first lines show how to run it. |
-| `docs` | Screenshots, and [what AlarmKit does on a real phone](docs/alarmkit-findings.md) |
+| `Scripts` | Generate the icon, the symbol, the tones and the README images. Each file's first lines show how to run it. |
+| `docs` | README images, and [what AlarmKit does on a real phone](docs/alarmkit-findings.md) |
 
 ### Decisions worth knowing
 
