@@ -26,7 +26,11 @@ final class AlarmingUITests: XCTestCase {
         _ = element.waitForExistence(timeout: Self.wait)
         // Rows touching the bottom edge count as hittable, but taps there go to the home indicator.
         let limit = app.frame.maxY - 100
-        for _ in 0..<8 where !(element.exists && element.isHittable && element.frame.maxY < limit) { app.swipeUp(velocity: .slow) }
+        var swipes = 0
+        while !(element.exists && element.isHittable && element.frame.maxY < limit), swipes < 8 {
+            app.swipeUp(velocity: .slow)
+            swipes += 1
+        }
         XCTAssertTrue(element.exists && element.isHittable, "not visible: \(element)")
     }
 
