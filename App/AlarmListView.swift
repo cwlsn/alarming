@@ -38,6 +38,7 @@ struct AlarmListView: View {
         .sheet(item: $editing) { editing in
             AlarmEditorView(model: model, alarm: editing.alarm, isNew: editing.isNew) { savedCount += 1 } onError: { errorMessage = $0 }
                 .navigationTransition(.zoom(sourceID: editing.isNew ? AnyHashable(Self.addSource) : AnyHashable(editing.id), in: zoom))
+                .withoutAnimationsWhenUITesting()
         }
         .alert("Alarm not changed", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK") {}

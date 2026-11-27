@@ -265,7 +265,7 @@ private struct DayPicker: View {
         }
         .animation(.spring(duration: 0.35, bounce: 0.35), value: days)
         .animation(.spring(duration: 0.35, bounce: 0.35), value: isOneTime)
-        .sheet(isPresented: $editsGroups) { DayGroupsView() }
+        .sheet(isPresented: $editsGroups) { DayGroupsView().withoutAnimationsWhenUITesting() }
     }
 
     /// Tapping the active choice clears it.
