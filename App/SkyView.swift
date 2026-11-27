@@ -33,7 +33,7 @@ struct LivingSky: View {
     var body: some View {
         let sky = SkyPalette(minuteOfDay: minute)
         ZStack {
-            TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion)) { context in
+            TimelineView(.animation(minimumInterval: 1 / 20, paused: reduceMotion || Services.isUITesting)) { context in
                 let time = context.date.timeIntervalSinceReferenceDate
                 let drift = reduceMotion ? 0 : Float(sin(time * 0.45)) * 0.16
                 let sway = reduceMotion ? 0 : Float(cos(time * 0.33)) * 0.12
