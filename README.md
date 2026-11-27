@@ -17,7 +17,7 @@
 <p align="center">
   <img src="docs/screenshots/list.png" width="240" alt="The alarm list, with when each alarm leaves you up and its snoozes drawn as shrinking bars">
   <img src="docs/screenshots/editor.png" width="240" alt="The alarm editor: a wake-up graph above snooze styles, first snooze length and number of snoozes">
-  <img src="docs/screenshots/editor-dark.png" width="240" alt="The alarm editor in dark mode">
+  <img src="docs/screenshots/editor-light.png" width="240" alt="The alarm editor in light mode">
 </p>
 
 Most alarms snooze for the same length every time, so "five more minutes" quietly becomes an hour. Alarming makes each snooze shorter than the one before, and before you go to sleep it shows the time you will really be out of bed.
